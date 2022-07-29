@@ -1,0 +1,1 @@
+export const CONTAINER_WIDTH_DESKTOP = 960;
