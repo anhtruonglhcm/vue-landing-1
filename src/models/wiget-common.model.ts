@@ -1,6 +1,6 @@
-import { MenuChildAddNew } from '@constants/menu-left.constant';
-import { IStyleCommon } from './style-common.model';
-import { IStyleCustom } from './style-custom.model';
+import type { MenuChildAddNew } from "../constants/menu-left.constant";
+import type { IStyleCommon } from "./style-common.model";
+import type { IStyleCustom } from "./style-custom.model";
 
 export interface IWigetCommon {
   id: number;
@@ -28,7 +28,7 @@ export interface ICommonCss {
   backgroundColor: string;
   color: string;
   fontSize: number;
-  fontWeight: 'bold';
-  textAlign: 'left' | 'center' | 'right' | 'justify';
+  fontWeight: "bold";
+  textAlign: "left" | "center" | "right" | "justify";
   lightHeight: number;
 }

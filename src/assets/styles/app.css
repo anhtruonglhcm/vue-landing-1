@@ -2003,13 +2003,13 @@ body.modal-open {
 }
 .builder-modal-input-option-search .builder-modal-input-option-column1 {
   width: calc(50% - 5px) !important;
-  // display: inline-block;
+  /* // display: inline-block; */
   border: 1px solid rgba(6, 21, 40, 0.1);
   float: left;
 }
 .builder-modal-input-option-search .builder-modal-input-option-column2 {
   width: calc(50% - 5px) !important;
-  // display: inline-block;
+  /* // display: inline-block; */
   border: 1px solid rgba(6, 21, 40, 0.1);
   float: right;
 }
@@ -3660,7 +3660,7 @@ body.modal-open {
   width: 60px;
   height: 60px;
   float: left;
-  // display: inline-block;
+  /* // display: inline-block; */
   counter-increment: linum;
 }
 .builder-attribute-editor .builder-attribute-detail-value-gallery-item::before {
@@ -4493,7 +4493,7 @@ body.modal-open {
 .ladi-icon {
   display: inline-block;
   font: normal normal normal 1em/1 LadiIcons;
-  // speak: none;
+  /* // speak: none; */
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -5218,16 +5218,16 @@ body.modal-open {
   cursor: not-allowed;
 }
 .pcr-app {
-  // position: absolute;
+  /* // position: absolute; */
   display: flex;
   flex-direction: column;
   z-index: 10000;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
     Helvetica Neue, Arial, sans-serif;
-  // box-shadow: 0 0.15em 1.5em 0 rgba(0, 0, 0, 0.1), 0 0 1em 0 rgba(0, 0, 0, 0.03);
+  /* // box-shadow: 0 0.15em 1.5em 0 rgba(0, 0, 0, 0.1), 0 0 1em 0 rgba(0, 0, 0, 0.03); */
   top: 5px;
-  // height: 15em;
-  // width: 24em;
+  /* // height: 15em;
+  // width: 24em; */
   max-width: 95vw;
   padding: 0.8em;
   border-radius: 0.1em;

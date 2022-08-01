@@ -1,4 +1,4 @@
-import { ElementLadi } from './element.model';
+import type { ElementLadi } from "./element.model";
 
 export interface ISection {
   id: number;
