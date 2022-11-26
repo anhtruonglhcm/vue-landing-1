@@ -6,6 +6,11 @@ export interface ISection {
   height: number;
   element: ElementLadi[];
   preHeight: number;
+  maxBottomToTop: {
+    id?: number;
+    value?: number;
+  };
+  isInViewPort: boolean;
 }
 
 export interface ISectionSubject {

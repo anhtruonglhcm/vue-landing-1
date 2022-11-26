@@ -1,4 +1,14 @@
 <template>
+  <div v-show="snapStore.isShowSnapLeft" ref="snapLeftRef" id="builder-snap-left" class="builder-snap ladi-hidden"
+    style="top: 0px; height: 100%"></div>
+  <div v-show="snapStore.isShowSnapTop" ref="snapTopRef" id="builder-snap-top" class="builder-snap ladi-hidden"
+    style="left: 0px; width: 100%"></div>
+  <div v-show="snapStore.isShowSnapTop" ref="snapWidthRef" id="builder-snap-right"
+    class="builder-snap builder-snap-width"
+    :style="{ display: snapWidth.isShow ? 'block' : 'none', width: (snapWidth.right - snapWidth.left) + 'px' }"><span
+      class="builder-snap-pixel">{{ snapWidth.right -
+      snapWidth.left }}</span>
+  </div>
   <div class="builder-border-left"></div>
   <div class="builder-border-right"></div>
   <div ui-view="left-menu">
@@ -14,11 +24,13 @@
         <div class="ladi-overlay"></div>
         <div class="ladi-container">
           <DragContainer v-for="(itemElement, indexElement) of section.element" :key="indexElement"
-            :indexSection="indexSection" :itemElement="itemElement" :indexElement="indexElement"/>
+            :indexSection="indexSection" :itemElement="itemElement" :indexElement="indexElement"
+            :preHeight="section.preHeight" @snap-left="handleSnapLeft" @snap-top="handleSnapTop" />
         </div>
         <div v-if="builderStore.sectionActiveIndex === indexSection" class="ladi-resize ladi-s-resize">
           <ResizeSection
-            @on-add-section="addNewSection(builderStore.sectionArray.length, builderStore.count, section.height, section.preHeight)" />
+            @on-add-section="addNewSection(builderStore.sectionArray.length, builderStore.count, section.height, section.preHeight, indexSection)"
+            :indexSection="indexSection" :idSection="section.id" :preHeight="section.preHeight" />
         </div>
       </div>
       <div id="SECTION_POPUP" class="ladi-section" style="height: 0px">
@@ -29,7 +41,7 @@
     </div>
     <div id="builder-preview" class="ladi-hidden"></div>
     <div v-if="builderStore.sectionArray.length == 0"
-      @click="addNewSection(builderStore.sectionArray.length, builderStore.count, 0, 0)"
+      @click="addNewSection(builderStore.sectionArray.length, builderStore.count, 0, 0, 0)"
       class="builder-button-no-section">
       Thêm mới Section
     </div>
@@ -52,8 +64,10 @@ import { useBuildStore } from '../stores/builder';
 import type { ElementLadi } from '../models/element.model';
 import type { IWigetButton } from '../models/wiget-button.model';
 import { BUTTON_DEFAULT } from '..//constants/element.constant';
-import { CONTAINER_WIDTH_DESKTOP } from '..//constants/builder.constant';
+import { CONTAINER_WIDTH_DESKTOP, SECTION_HEIGHT_DEFAULT } from '..//constants/builder.constant';
 import { useResizeStore } from '../stores/resize';
+import { useSnapStore } from '../stores/snap';
+import type { ISnapLeftState, ISnapTopState } from '../models/snap.model';
 
 export default defineComponent({
   components: {
@@ -62,28 +76,73 @@ export default defineComponent({
     ResizeSection,
     DragContainer
   },
-  mounted(){
-    for(let i=0 ; i< 200; i++){
-      this.addElement(MenuChildAddNew.BUTTON);
-    }
+  mounted() {
+    // const innerWidth = window.innerWidth;
+    this.snapStore.updateInnerWidth(window.innerWidth);
+    this.snapStore.updateScrollTop(window.scrollY);
+    this.builderStore.updateScrollTop(window.scrollY);
+    this.builderStore.updateInnerWidth(window.innerWidth);
+    // this.builderStore.setSectionInViewPort();
+    // this.builderStore.setElementInViewPort();
+    this.snapStore.updateSnapWindowLeft([0, 960]);
+    window.addEventListener("resize", this.handleReize);
+    window.addEventListener("scroll", this.handleWindowScroll);
+  },
+  destroyed() {
+    window.removeEventListener("resize", this.handleReize);
+    window.removeEventListener("scroll", this.handleWindowScroll);
   },
   setup() {
     const builderStore = useBuildStore();
     const resizeStore = useResizeStore();
+    const snapStore = useSnapStore();
     return {
       builderStore,
-      resizeStore
+      resizeStore,
+      snapStore,
+      snapWidth: snapStore.getSnapWidth
     }
   },
   data() {
     return {
-      menuChildEnum: MenuChildAddNew
+      menuChildEnum: MenuChildAddNew,
+      timeOutId: null as any,
+      sectionHeightDefault: SECTION_HEIGHT_DEFAULT
     }
   },
   methods: {
+    handleReize(){
+      if (this.snapStore.isShowSnapLeft || this.snapStore.isShowSnapTop) {
+        this.snapStore.hideSnap();
+      }
+      if(this.snapWidth.isShow){
+        this.snapStore.snapWidth.isShow = false;
+      }
+      clearTimeout(this.timeOutId);
+      this.timeOutId = setTimeout(() => {
+        this.snapStore.updateInnerWidth(window.innerWidth);
+        this.builderStore.updateInnerWidth(window.innerWidth);
+      }, 250);
+    },
+
+    handleWindowScroll(){
+      if (this.snapStore.isShowSnapLeft || this.snapStore.isShowSnapTop) {
+        this.snapStore.hideSnap();
+      }
+      if (this.snapWidth.isShow) {
+        this.snapStore.snapWidth.isShow = false;
+      }
+      clearTimeout(this.timeOutId);
+      this.timeOutId = setTimeout(() => {
+        this.snapStore.updateScrollTop(window.scrollY);
+        this.builderStore.updateScrollTop(window.scrollY);
+        this.builderStore.setSectionInViewPort();
+        this.builderStore.setElementInViewPort();
+      }, 250);
+    },
     addElement(elementType: MenuChildAddNew) {
       if (this.builderStore.sectionArray.length === 0) {
-        this.addNewSection(0, this.builderStore.count, 0, 0);
+        this.addNewSection(0, this.builderStore.count, this.sectionHeightDefault, 0, 0);
       }
       let item: ElementLadi | null = null;
 
@@ -103,23 +162,42 @@ export default defineComponent({
         sectionIndex: this.builderStore.sectionActiveIndex || 0,
         element: item as ElementLadi,
       });
+
+      this.builderStore.updateMaxBottomToTop(
+        this.builderStore.sectionActiveIndex || 0, item?.id as number, (item?.top || 0) + (item?.height || 0)
+      );
+
+      this.builderStore.updateSectionIndexActive(this.builderStore.sectionArray.length - 1)
     },
     clickSection(index: number) {
       this.builderStore.updateSectionIndexActive(index);
       this.builderStore.updateElementIndexActive(null);
     },
+
     addNewSection(
       sectionArrayLength: number,
       count: number,
       sectionHeight: number,
-      preSectionHeight: number,) {
-      this.builderStore.addNewSection({
+      preSectionHeight: number,
+      indexSection: number
+      ) {
+      let preHeight = 0;
+      if (sectionArrayLength){
+        preHeight = preSectionHeight + sectionHeight;
+      }
+      this.builderStore.addNewSection(indexSection, {
         id: count,
         idSection: `SECTION${count}`,
-        height: 360,
+        height: sectionHeight,
         element: [],
-        preHeight: sectionHeight + preSectionHeight,
+        preHeight,
+        maxBottomToTop: {
+          value: 0
+        },
+        isInViewPort: true
       });
+      this.builderStore.updateSectionIndexActive(this.builderStore.getIndexElementByid(count));
+      this.builderStore.count++;
     },
     mouseDownElement(
       sectionIndex: number,
@@ -127,7 +205,6 @@ export default defineComponent({
       isEditting: boolean | undefined,
       elementActiveIndex: number | null,
       itemElement: ElementLadi, mouseEvent: MouseEvent) {
-      console.log(mouseEvent);
       this.builderStore.updateElementIndexActive(elementIndex);
       this.builderStore.updateSectionIndexActive(sectionIndex);
       if (!isEditting) {
@@ -155,6 +232,31 @@ export default defineComponent({
     handleMouseUp() {
       document.removeEventListener("mousemove", this.handleMouseMove);
       document.removeEventListener("mouseup", this.handleMouseUp);
+    },
+
+    handleSnapLeft(data: { snapLeftState: ISnapLeftState} ){
+      const leftRef = this.$refs.snapLeftRef as HTMLElement;
+      if (data.snapLeftState.isShow){
+        leftRef.style.left = `${data.snapLeftState.left + (this.snapStore.innerWidth - 960 - 7)/2}px`;
+        leftRef.classList.remove('ladi-hidden');
+      } else {
+        leftRef.classList.add('ladi-hidden');
+      }
+    },
+
+    handleSnapTop(data: { snapTopState: ISnapTopState }) {
+      const topRef = this.$refs.snapTopRef as HTMLElement;
+      const widthRef = this.$refs.snapWidthRef as HTMLElement;
+      console.log(data)
+      if (data.snapTopState.isShow) {
+        const top = data.snapTopState.top - this.snapStore.scrollTop;
+        topRef.style.top = `${top}px`;
+        widthRef.style.top = `${top}px`;
+        widthRef.style.left = `${this.snapWidth.left + (this.snapStore.innerWidth - 960 - 7) / 2}px`
+        topRef.classList.remove('ladi-hidden');
+      } else {
+        topRef.classList.add('ladi-hidden');
+      }
     },
 
     createButton(
